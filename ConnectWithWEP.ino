@@ -90,11 +90,11 @@ void loop() {
   trainstate = digitalRead(2);
   if(trainstate == HIGH){
     //json post
-    Serial.println("RUN BITCH A TRAIN");
+    Serial.println("train");
   }
   if(trainstate == LOW){
     //postData = string(trainstate) + "/5"
-    Serial.println(" i sleep");
+    Serial.println("no train");
   }
 } 
 
