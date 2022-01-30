@@ -39,7 +39,7 @@ char pass[] = SECRET_PASS;                        // your network password (use 
 int keyIndex = 0;                                 // your network key Index number
 int status = WL_IDLE_STATUS;                      // the Wifi radio's status
 int trainstate = 0;
-char server[] = "train.jpeckham.com:5000";
+const char server[] = "train.jpeckham.com:5000/state/5";
 String postData;
 
 WiFiClient client;
@@ -84,19 +84,30 @@ void setup() {
 
 void loop() {
   // check the network connection once every 5 seconds:
-  delay(5000); // 30 seconds
+  delay(5000); // 5 seconds
   // look into replacing with millis(), this is problematic (delay shuts down the arduino)
   printCurrentNet();
   trainstate = digitalRead(2);
-  if(trainstate == HIGH){
-    //json post
-    Serial.println("train");
-  }
-  if(trainstate == LOW){
-    //postData = string(trainstate) + "/5"
-    Serial.println("no train");
-  }
-} 
+  postJSON(trainstate);
+  Serial.println(trainstate);
+  
+}
+
+void postJSON(STATE){
+  Serial.println("making POST request");
+  String contentType = "application/x-www-form-urlencoded";
+  String postData = "state="+string(STATE);
+
+  client.post("/post", contentType, postData);
+
+  // read the status code and body of the response
+  int statusCode = client.responseStatusCode();
+  Serial.print("Status code: ");
+  Serial.println(statusCode);
+  String response = client.responseBody();
+  Serial.print("Response: ");
+  Serial.println(response);
+}
 
 void printWifiData() {
   // print your board's IP address:
