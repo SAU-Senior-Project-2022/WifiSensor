@@ -21,7 +21,7 @@
  by dlf (Metodo2 srl)
  modified 31 May 2012
  by Tom Igoe
-Main sau id: 5
+Main sau id: 2
 
 lat/long
 35.053327
@@ -39,11 +39,11 @@ char pass[] = SECRET_PASS;                        // your network password (use 
 int keyIndex = 0;                                 // your network key Index number
 int status = WL_IDLE_STATUS;                      // the Wifi radio's status
 int trainstate = 0;
-const char server[] = "train.jpeckham.com:5000/state/5";
+const char server[] = "10.9.161.72";
 String postData;
 
 WiFiClient client;
-
+int counter = 0;
 
 void setup() {
   pinMode(2, INPUT); 
@@ -72,8 +72,9 @@ void setup() {
     status = WiFi.begin(ssid, keyIndex, pass);
 
     // wait 10 seconds for connection:
-    delay(10000);
+    delay(20000);
   }
+  
 
   // once you are connected :
   Serial.print("You're connected to the network");
@@ -84,29 +85,57 @@ void setup() {
 
 void loop() {
   // check the network connection once every 5 seconds:
-  delay(5000); // 5 seconds
   // look into replacing with millis(), this is problematic (delay shuts down the arduino)
   printCurrentNet();
   trainstate = digitalRead(2);
   postJSON(trainstate);
   Serial.println(trainstate);
-  
+  delay(10000); // 10 seconds
+
 }
 
-void postJSON(STATE){
+void postJSON(int STATE){
+  counter = counter+1;
+  String response;
   Serial.println("making POST request");
-  String contentType = "application/x-www-form-urlencoded";
-  String postData = "state="+string(STATE);
+  client.connect(server, 5000);
+  Serial.println("connected");
 
-  client.post("/post", contentType, postData);
+  
+  client.print("POST /state/2 HTTP/1.1 \n");
+  client.print("Content-Type: application/json\n");
+  client.print("Content-Length: 11\n");
+  
+  client.println();
+  if(STATE == 1){
+    client.print("{\"state\":1}\n");
+    
+  
+  //client.read(
+    Serial.println("we sent 1");
+    Serial.print("count: "+String(counter));
+    
+  }
+  else if (STATE == 0){
+    client.print("{\"state\":0}\n");
+    
+    client.println();
+  //client.read(
+    Serial.println("we sent 0");
+    Serial.println(String(counter));
+
+  }
+    
+
+
 
   // read the status code and body of the response
-  int statusCode = client.responseStatusCode();
-  Serial.print("Status code: ");
-  Serial.println(statusCode);
-  String response = client.responseBody();
-  Serial.print("Response: ");
-  Serial.println(response);
+//  int statusCode = client.responseStatusCode();
+ // Serial.print("Status code: ");
+ // Serial.println(statusCode);
+//  String response = client.responseBody();
+//  Serial.print("Response: ");
+//  Serial.println(response);
 }
 
 void printWifiData() {
