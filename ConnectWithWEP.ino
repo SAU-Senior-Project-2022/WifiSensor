@@ -3,24 +3,6 @@
 
 /*
 
- This example connects to a WEP-encrypted Wifi network.
- Then it prints the  MAC address of the Wifi module,
- the IP address obtained, and other network details.
-
- If you use 40-bit WEP, you need a key that is 10 characters long,
- and the characters must be hexadecimal (0-9 or A-F).
- e.g.  for 40-bit, ABBADEAF01 will work, but ABBADEAF won't work
- (too short) and ABBAISDEAF won't work (I and S are not
- hexadecimal characters).
-
- For 128-bit, you need a string that is 26 characters long.
- D0D0DEADF00DABBADEAFBEADED will work because it's 26 characters,
- all in the 0-9, A-F range.
-
- created 13 July 2010
- by dlf (Metodo2 srl)
- modified 31 May 2012
- by Tom Igoe
 Main sau id: 2
 
 lat/long
@@ -28,7 +10,7 @@ lat/long
 -85.048468
 
 
-train.jpeckham.com:5000/
+train.jpeckham.com:5000
  */
 #include <SPI.h>
 #include <WiFiNINA.h>
@@ -39,11 +21,11 @@ char pass[] = SECRET_PASS;                        // your network password (use 
 int keyIndex = 0;                                 // your network key Index number
 int status = WL_IDLE_STATUS;                      // the Wifi radio's status
 int trainstate = 0;
-const char server[] = "10.9.161.72";
+const char server[] = "train.jpeckham.com";
 String postData;
 
 WiFiClient client;
-int counter = 0;
+//int counter = 0;
 
 void setup() {
   pinMode(2, INPUT); 
@@ -72,7 +54,7 @@ void setup() {
     status = WiFi.begin(ssid, keyIndex, pass);
 
     // wait 10 seconds for connection:
-    delay(20000);
+    delay(10000);
   }
   
 
@@ -87,57 +69,51 @@ void loop() {
   // check the network connection once every 5 seconds:
   // look into replacing with millis(), this is problematic (delay shuts down the arduino)
   printCurrentNet();
+  // collect the state of the train
   trainstate = digitalRead(2);
+  // send the train info to the JSON form
   postJSON(trainstate);
+  // print the state of the train to debug
   Serial.println(trainstate);
+  // wait 10 seconds to not DDOS the server
   delay(10000); // 10 seconds
 
 }
 
 void postJSON(int STATE){
+  // increment the debug counter
   counter = counter+1;
   String response;
   Serial.println("making POST request");
   client.connect(server, 5000);
   Serial.println("connected");
-
+  // connect to the server at the right port
   
   client.print("POST /state/2 HTTP/1.1 \n");
   client.print("Content-Type: application/json\n");
   client.print("Content-Length: 11\n");
+  // the first half of the json form
   
   client.println();
+ 
+ //depending on the status of the train, send the other half of the form
   if(STATE == 1){
     client.print("{\"state\":1}\n");
     
-  
-  //client.read(
     Serial.println("we sent 1");
-    Serial.print("count: "+String(counter));
+    Serial.println("count: "+String(counter));
     
   }
   else if (STATE == 0){
     client.print("{\"state\":0}\n");
     
     client.println();
-  //client.read(
     Serial.println("we sent 0");
     Serial.println(String(counter));
-
   }
-    
-
-
-
-  // read the status code and body of the response
-//  int statusCode = client.responseStatusCode();
- // Serial.print("Status code: ");
- // Serial.println(statusCode);
-//  String response = client.responseBody();
-//  Serial.print("Response: ");
-//  Serial.println(response);
 }
 
+//the remainder of the code is debug code from the example code this project is named after. feel free to ignore
 void printWifiData() {
   // print your board's IP address:
   IPAddress ip = WiFi.localIP();
